@@ -62,23 +62,23 @@ void http_request_set(http_request* _req, int opt, void* value){
             size_t len = 0;            
             while(header[len])
                 len++;
-            len++;
             
             //check if first header
             if(_req->headers == NULL){
                 headers header = {headers: malloc(0), size: 0};
                 _req->headers = &header;
             }
+
             
-            void* h = realloc(_req->headers->headers, _req->headers->size + len + 1);  //+1 for the new line am gonna add in the middle
-            strncpy(h, _req->headers->headers, _req->headers->size); //copy the old to new mem
-            strncpy(h + _req->headers->size + 1, _req->headers->headers, _req->headers->size); //copy the new header
-            ((char*)h)[_req->headers->size] = '\n'; //add new line between
-            printf("%s\n", (char*)h);
-            
+            size_t new_size = _req->headers->size + len + 1;
+            char* h = (char*)realloc(_req->headers->headers, new_size); 
+
+            strncpy(h, _req->headers->headers, _req->headers->size); 
+            h[_req->headers->size] = '\n'; 
+            strncpy(h + _req->headers->size + 1, header, len); 
+
             _req->headers->headers = h;
-
-
+            _req->headers->size = new_size;
 
             break;
         case req_url:
@@ -119,18 +119,18 @@ void handle_http(http_reposne* _res){
 int main(){
 
     http_request req = {0};
-    
+
     //set the reques url
     http_request_set(&req, req_url, "https://google.com?query=what+the+f+is+going+on");
 
     //set the request headders
-    http_request_set(&req, req_header, "Content-type:text/plain");
-    // http_request_set(&req, req_header, "Accept:text/plain");
+    http_request_set(&req, req_header, "Content-type text/plain");
+    http_request_set(&req, req_header, "Accept text/plain");
+    http_request_set(&req, req_header, "Authentication Bearer <Token>");
 
     //set the user agent
     http_request_set(&req, req_user, "libcurl/1.0");
 
-    printf("%s\n", req.headers->headers);
 
 
 
