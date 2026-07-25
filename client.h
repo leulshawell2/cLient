@@ -1,14 +1,3 @@
-#include <stdio.h>
-
-
-#define panic(format, ...) \
-        fprintf(stderr, "PANIC at %s:%d in %s(): " format "\n", \
-                __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
-        exit(EXIT_FAILURE); \
-
-
-
-
 #define MAX_CONTENT_LENGTH_BYTES 2
 #define MAX_USER_AGENT_LENGTH  50
 #define HTTP_VERSION  "1.1"
@@ -30,6 +19,10 @@ typedef enum {
 }req_opts;
 
 
+typedef struct {
+    unsigned int time_out_mili; 
+    char    follow_redirect;
+}request_config;
 
 // Structure to safely hold response data in memory
 struct MemoryBuffer {
@@ -40,9 +33,10 @@ struct MemoryBuffer {
 typedef struct {
     int satus;
     char* content;
-    size_t length;
+    size_t content_len;
 
-} http_reposne;
+
+} http_response;
 
 
 typedef struct {

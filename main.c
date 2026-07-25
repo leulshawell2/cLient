@@ -17,10 +17,19 @@ int main(){
 
     http_request_set(&req, req_body, "username=username password=password");
 
+    printf("%s\n", "connecting...");
 
-    print_request(&req);
- 
+    tcp_connection conn = tcp_connect("192.168.1.1", 443);
+    
+    if(!conn.connected){
+        panic("TCP connection failed  : (");
+    }
+    
+    printf("%s\n", "connected  : )");
 
+    request_config conf = {0};
+    http_response http_res = http_send(&conn, &req, &conf);
+    
 
     return 0;
 }

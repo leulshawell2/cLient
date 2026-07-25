@@ -1,13 +1,10 @@
-#include <stdlib.h>
 #include <string.h>
 
+#include  "helper.h"
 #include  "client.h"
+#include  "transport.c"
 
-
-
-
-
-void http_request_set(http_request* _req, int opt, void* value){
+void http_request_set(http_request* req, int opt, void* value){
     switch (opt){
         case req_header:
             char* header = (char*)value;
@@ -17,49 +14,48 @@ void http_request_set(http_request* _req, int opt, void* value){
                 len++;
 
             //check if first header
-            if(_req->headers == NULL)
-                _req->headers = malloc(0);
+            if(req->headers == NULL)
+                req->headers = malloc(0);
 
 
-            size_t new_size = _req->header_size + len + 1;
-            char* h = (char*)realloc(_req->headers, new_size + 1);  //+1 for NULL for printing and general safety
+            size_t new_size = req->header_size + len + 1;
+            char* h = (char*)realloc(req->headers, new_size + 1);  //+1 for NULL for printing and general safety
 
-            strncpy(h, _req->headers, _req->header_size);
-            h[_req->header_size] = '\n';
-            strncpy(h + _req->header_size + 1, header, len);
+            strncpy(h, req->headers, req->header_size);
+            h[req->header_size] = '\n';
+            strncpy(h + req->header_size + 1, header, len);
             h[new_size] = '\0';
 
 
-            _req->headers = h;
-            _req->header_size = new_size;
+            req->headers = h;
+            req->header_size = new_size;
 
             break;
 
         case req_host:
-            _req->host = (char*) value;
+            req->host = (char*) value;
             break;
 
         case req_user:
-            _req->user_agent = (char*)value;
+            req->user_agent = (char*)value;
             
             char user_agent_header[MAX_CONTENT_LENGTH_BYTES + 20];
             snprintf(user_agent_header, MAX_CONTENT_LENGTH_BYTES + 20, "User-Agent:  %s", (char*)value);
-            http_request_set(_req, req_header, user_agent_header);
+            http_request_set(req, req_header, user_agent_header);
             break;
 
         case req_method:
-            _req->method = (char*)value;
+            req->method = (char*)value;
             break;
 
         case req_body:
             char* body = (char*) value;
 
-            if(_req->method != METHOD_POST && _req->method != METHOD_PUT){
-                panic("Body not allowed for method %s", _req->method);
+            if(req->method != METHOD_POST && req->method != METHOD_PUT){
+                panic("Body not allowed for method %s", req->method);
             }
-            
-            _req->body = body;
 
+            req->body = body;
             
             //get the legth of the body and set the content length header
             size_t body_len = 0;
@@ -68,15 +64,14 @@ void http_request_set(http_request* _req, int opt, void* value){
 
             char content_length_header[MAX_CONTENT_LENGTH_BYTES + 20];
             snprintf(content_length_header, MAX_CONTENT_LENGTH_BYTES + 20, "Content-Length:  %d", body_len);
-            http_request_set(_req, req_header, content_length_header);
+            http_request_set(req, req_header, content_length_header);
             break;
         case req_resource:
-            _req->resource = (char*)value;
+            req->resource = (char*)value;
             break;
         default:
             break;
     }
-
 }
 
 
@@ -87,7 +82,20 @@ void print_request(http_request* _req){
     
 }
 
-void http_send_request(http_request* _req){
-    //this is the transport layer
-    //try to keep it as simple as f possible
+
+/**
+ * This is blocking is won't return until the response comes or connection closes
+ */
+
+http_response http_send(tcp_connection* _conn, http_request* _req, request_config* _conf){
+        //build the http reques string from the req object
+        //send it over the tcp connection
+        //wait and recieve all incomming response until timeout or http_response_end
+
+        //parse the response string and build a reposne object
+
+        //handle different status_codes based on config
+
+        http_response res = {0};
+        return res;
 }
