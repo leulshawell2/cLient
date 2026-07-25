@@ -5,8 +5,8 @@ int main(){
     http_request req = {0};
 
     http_request_set(&req, req_host, "google.com");
-    http_request_set(&req, req_resource, "/search?query=what+the+f+is+going+on");
-    http_request_set(&req, req_method, METHOD_PUT);
+    http_request_set(&req, req_resource_locator, "/search?query=what+the+f+is+going+on");
+    http_request_set(&req, req_method, METHOD_POST);
 
     //set the request headers
     http_request_set(&req, req_header, "Content-Type: text/plain");
@@ -17,9 +17,9 @@ int main(){
 
     http_request_set(&req, req_body, "username=username password=password");
 
-    printf("%s\n", "connecting...");
 
-    tcp_connection conn = tcp_connect("192.168.1.1", 443);
+    printf("%s\n", "connecting...");
+    tcp_connection conn = tcp_connect("127.0.0.1", 4444);
     
     if(!conn.connected){
         panic("TCP connection failed  : (");
@@ -29,7 +29,7 @@ int main(){
 
     request_config conf = {0};
     http_response http_res = http_send(&conn, &req, &conf);
-    
+
 
     return 0;
 }

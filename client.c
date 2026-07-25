@@ -4,6 +4,8 @@
 #include  "client.h"
 #include  "transport.c"
 
+
+
 void http_request_set(http_request* req, int opt, void* value){
     switch (opt){
         case req_header:
@@ -66,8 +68,15 @@ void http_request_set(http_request* req, int opt, void* value){
             snprintf(content_length_header, MAX_CONTENT_LENGTH_BYTES + 20, "Content-Length:  %d", body_len);
             http_request_set(req, req_header, content_length_header);
             break;
-        case req_resource:
-            req->resource = (char*)value;
+        case req_resource_locator:
+            char* rl = (char*)value;
+
+            size_t rl_len = 0;
+            while(rl[rl_len] != '\0')
+                rl_len++;
+        
+            req->resource = rl;
+            req->rl_size = rl_len;
             break;
         default:
             break;
@@ -76,10 +85,50 @@ void http_request_set(http_request* req, int opt, void* value){
 
 
 void print_request(http_request* _req){
-    printf("%s %s HTTP/%s", _req->method, _req->resource, HTTP_VERSION);
-    printf("%s\n", _req->headers);   
+    printf("%s %s %s", _req->method, _req->resource, HTTP_VERSION);
+    printf("%s\n\r\n\r", _req->headers);   
     printf("%s\n", _req->body);
     
+}
+
+
+size_t http_request_max_size(http_request* _req){
+    int size = _req->body_size + _req->header_size + _req->rl_size;
+
+}
+
+tcp_packet http_request_prepare(http_request* _req){
+    tcp_packet pac = {0};
+    size_t max_size = http_request_max_size(_req);
+    char* buffer = (char*)malloc(max_size);
+    char* b = buffer;
+
+    //copy the entire request string in to this memory
+    int method_len = strlen(_req->method);
+    strcpy(buffer, _req->method);
+    //space after the method
+    buffer[method_len] = ' ';
+
+    buffer += method_len + 1;
+
+    strcpy(buffer, _req->resource);
+
+    buffer[_req->rl_size] = ' ';
+
+    buffer += _req->rl_size + 1;
+    
+    strcpy(buffer, HTTP_VERSION);
+
+    buffer += sizeof(HTTP_VERSION);
+
+    strcpy(buffer, _req->headers);
+
+    pac.buff = b;
+    pac.size = max_size;
+
+    return pac;
+
+
 }
 
 
@@ -89,13 +138,19 @@ void print_request(http_request* _req){
 
 http_response http_send(tcp_connection* _conn, http_request* _req, request_config* _conf){
         //build the http reques string from the req object
+        http_response res = {0};
+        tcp_packet req_packet = http_request_prepare(_req);
+        
         //send it over the tcp connection
-        //wait and recieve all incomming response until timeout or http_response_end
+        if(tcp_send_packet(_conn, &req_packet) < 0){
+            panic("Error sending tcp request packet");
+        }
 
+        //wait and recieve all incomming response  until timeout or http_response_end
+        
         //parse the response string and build a reposne object
 
         //handle different status_codes based on config
 
-        http_response res = {0};
         return res;
 }
