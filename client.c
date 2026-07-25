@@ -1,54 +1,7 @@
-// #include <stdio.h>
-#include <stdlib.h> //mem alloc
-#include <string.h> //string paring and copy
-#include <curl/curl.h>  //http calls
+#include <stdlib.h>
+#include <string.h>
 
-
-
-typedef enum {
-    req_header,
-    req_url   ,
-    req_method,
-    req_user  
-}req_opts;
-
-
-
-// Structure to safely hold response data in memory
-struct MemoryBuffer {
-    char *response;
-    size_t size;
-};
-
-typedef struct {
-    int satus;
-    char* content;
-    size_t length;
-
-} http_reposne;
-
-
-typedef struct {
-    char* headers;
-    size_t size;
-}headers;
-
-
-typedef struct {
-    char* url;
-    headers* headers; //Content-type: application/json
-    char* user_agent;
-
-}http_request;
-
-
-
-
-void http_client_init(){
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl_easy_init();
-
-}
+#include  "client.h"
 
 
 
@@ -59,80 +12,106 @@ void http_request_set(http_request* _req, int opt, void* value){
         case req_header:
             char* header = (char*)value;
             //calculate the length of the header
-            size_t len = 0;            
+            size_t len = 0;
             while(header[len])
                 len++;
-            
+
             //check if first header
-            if(_req->headers == NULL){
-                headers header = {headers: malloc(0), size: 0};
-                _req->headers = &header;
-            }
+            if(_req->headers == NULL)
+                _req->headers = malloc(0);
 
-            
-            size_t new_size = _req->headers->size + len + 1;
-            char* h = (char*)realloc(_req->headers->headers, new_size); 
 
-            strncpy(h, _req->headers->headers, _req->headers->size); 
-            h[_req->headers->size] = '\n'; 
-            strncpy(h + _req->headers->size + 1, header, len); 
+            size_t new_size = _req->header_size + len + 1;
+            char* h = (char*)realloc(_req->headers, new_size + 1);  //+1 for NULL for printing and general safety
 
-            _req->headers->headers = h;
-            _req->headers->size = new_size;
+            strncpy(h, _req->headers, _req->header_size);
+            h[_req->header_size] = '\n';
+            strncpy(h + _req->header_size + 1, header, len);
+            h[new_size] = '\0';
+
+
+            _req->headers = h;
+            _req->header_size = new_size;
 
             break;
-        case req_url:
-            _req->url = (char*) value;
+
+        case req_host:
+            _req->host = (char*) value;
             break;
 
         case req_user:
             _req->user_agent = (char*)value;
+            
+            char user_agent_header[MAX_CONTENT_LENGTH_BYTES + 20];
+            snprintf(user_agent_header, MAX_CONTENT_LENGTH_BYTES + 20, "User-Agent:  %s", (char*)value);
+            http_request_set(_req, req_header, user_agent_header);
             break;
 
+        case req_method:
+            _req->method = (char*)value;
+            break;
+
+        case req_body:
+            char* body = (char*) value;
+
+            if(_req->method != METHOD_POST && _req->method != METHOD_PUT){
+                panic("Body not allowed for method %s", _req->method);
+            }
+            
+            _req->body = body;
+
+            
+            //get the legth of the body and set the content length header
+            size_t body_len = 0;
+            while(body[body_len] != '\0')
+                body_len++;
+
+            char content_length_header[MAX_CONTENT_LENGTH_BYTES + 20];
+            snprintf(content_length_header, MAX_CONTENT_LENGTH_BYTES + 20, "Content-Length:  %d", body_len);
+            http_request_set(_req, req_header, content_length_header);
+            break;
+        case req_resource:
+            _req->resource = (char*)value;
+            break;
         default:
             break;
     }
 
 }
 
-void http_client_cleaup(){
 
-
-}
+void print_request(http_request* _req){
+    printf("%s %s HTTP/%s", _req->method, _req->resource, HTTP_VERSION);
+    printf("%s\n", _req->headers);   
     
-void parse(http_reposne* _res , void* _buff){
-
 }
 
-void http_call(http_request req){
-
+void http_send_request(http_request* _req){
+    //this is the transport layer
+    //try to keep it as simple as f possible
 }
-
-
-void handle_http(http_reposne* _res){
-    //some http call
-    void* _buff;
-    parse(_res, _buff);
-}
-
 
 int main(){
 
     http_request req = {0};
 
-    //set the reques url
-    http_request_set(&req, req_url, "https://google.com?query=what+the+f+is+going+on");
+    http_request_set(&req, req_host, "google.com");
+    http_request_set(&req, req_resource, "/search?query=what+the+f+is+going+on");
+    http_request_set(&req, req_method, METHOD_PUT);
 
-    //set the request headders
-    http_request_set(&req, req_header, "Content-type text/plain");
-    http_request_set(&req, req_header, "Accept text/plain");
-    http_request_set(&req, req_header, "Authentication Bearer <Token>");
+    //set the request headers
+    http_request_set(&req, req_header, "Content-Type: text/plain");
+    http_request_set(&req, req_header, "Accept: text/plain");
 
     //set the user agent
     http_request_set(&req, req_user, "libcurl/1.0");
 
+    http_request_set(&req, req_body, "username=username password=password");
 
 
+    print_request(&req);
+ 
 
-    return 0;   
+
+    return 0;
 }
