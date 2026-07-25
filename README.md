@@ -1,4 +1,4 @@
-# cLEINT
+# cLIENT
 
 
 * If you don't want DNS and all the un-neccessary perks of other http clients

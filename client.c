@@ -17,11 +17,11 @@ void http_request_set(http_request* req, int opt, void* value){
 
             //check if first header
             if(req->headers == NULL)
-                req->headers = malloc(0);
+                req->headers = malloc(1);
 
 
-            size_t new_size = req->header_size + len + 1;
-            char* h = (char*)realloc(req->headers, new_size + 1);  //+1 for NULL for printing and general safety
+            size_t new_size = req->header_size + len;
+            char* h = (char*)realloc(req->headers, new_size);  //+1 for NULL for printing and general safety
 
             strncpy(h, req->headers, req->header_size);
             h[req->header_size] = '\n';
@@ -97,7 +97,10 @@ size_t http_request_max_size(http_request* _req){
 
 }
 
+
 tcp_packet http_request_prepare(http_request* _req){
+
+    print_request(_req);
     tcp_packet pac = {0};
     size_t max_size = http_request_max_size(_req);
     char* buffer = (char*)malloc(max_size);
