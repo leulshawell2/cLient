@@ -1,9 +1,9 @@
-** cLEINT **
+# cLEINT
 
 
-# If you don't want DNS and all the un-neccessary perks of other http clients
+* If you don't want DNS and all the un-neccessary perks of other http clients
 
-# Make sure you know you use case and http servers to use this. Some things may fail
+* Make sure you know you use case and http servers to use this. Some things may fail
 
 #Exampe
 
