@@ -13,7 +13,7 @@ int main(){
     http_request_set(&req, req_header, "Accept: text/plain");
 
     //set the user agent
-    http_request_set(&req, req_user, "libcurl/1.0");
+    http_request_set(&req, req_user, "cLIENT/0.0.1");
 
     http_request_set(&req, req_body, "username=username password=password");
 
